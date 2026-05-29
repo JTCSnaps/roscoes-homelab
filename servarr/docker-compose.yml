@@ -1,0 +1,269 @@
+###############################################
+# Common Keys for all apps (Excluding VPN apps)
+###############################################
+
+x-common-keys: &common-keys
+  restart: unless-stopped
+  logging:
+    driver: json-file
+  environment:
+    PUID: 1000
+    PGID: 1000
+    TZ: America/Los_Angeles
+
+services:
+###############################################
+# GLUETUN - VPN Client
+###############################################
+  gluetun:
+    container_name: gluetun
+    image: qmcgaw/gluetun:latest
+    cap_add:
+      - NET_ADMIN
+    devices:
+      - /dev/net/tun:/dev/net/tun
+    ports:
+      - 8080:8080 # qBittorrent Web UI
+      - 6881:6881 # qBittorrent TCP
+      - 6881:6881/udp # qBittorrent UDP
+    volumes:
+      - ./gluetun:/gluetun
+    environment:
+      - WIREGUARD_MTU=1420 # Increased from 1280 to reduce fragment timeouts
+    env_file:
+      - .env
+    healthcheck:
+      test: ping -c 1 www.google.com || exit 1
+      interval: 20s
+      timeout: 10s
+      retries: 5
+    networks:
+      servarrnetwork:
+        ipv4_address: 172.39.0.2
+
+###############################################
+# QBITTORRENT - Downloader (Routed through VPN)
+###############################################
+  qbittorrent:
+    <<: *common-keys
+    container_name: qbittorrent
+    image: ghcr.io/hotio/qbittorrent:latest
+    depends_on:
+      gluetun:
+        condition: service_healthy
+    network_mode: service:gluetun
+    environment:
+      - WEBUI_PORT=8080
+      - TORRENTING_PORT=6881
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./qbittorrent:/config
+      - /mnt/pve/nas_files:/data
+
+###############################################
+# PROWLARR - Indexer Manager
+###############################################
+  prowlarr:
+    <<: *common-keys
+    container_name: prowlarr
+    image: ghcr.io/hotio/prowlarr:latest
+    ports:
+      - 9696:9696
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./prowlarr:/config
+    networks:
+      servarrnetwork:
+        ipv4_address: 172.39.0.3
+
+##############################################
+# FLARESOLVERR - Cloudflare Bypass
+##############################################
+  flaresolverr:
+    <<: *common-keys
+    container_name: flaresolverr
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    environment:
+      - LOG_LEVEL=info
+    ports:
+      - 8191:8191
+    networks:
+      servarrnetwork:
+        ipv4_address: 172.39.0.4
+    
+
+###############################################
+# RADARR - Movies
+###############################################
+  radarr:
+    <<: *common-keys
+    container_name: radarr
+    image: ghcr.io/hotio/radarr:latest
+    depends_on:
+      - qbittorrent
+      - prowlarr
+    ports:
+      - 7878:7878
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./radarr:/config
+      - /mnt/pve/nas_files:/data
+    networks:
+      servarrnetwork:
+        ipv4_address: 172.39.0.5
+    
+
+###############################################
+# SONARR - TV Shows
+###############################################
+  sonarr:
+    <<: *common-keys
+    container_name: sonarr
+    image: ghcr.io/hotio/sonarr:latest
+    depends_on:
+      - qbittorrent
+      - prowlarr
+    ports:
+      - 8989:8989
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./sonarr:/config
+      - /mnt/pve/nas_files:/data
+    networks:
+      servarrnetwork:
+        ipv4_address: 172.39.0.6
+    
+
+###############################################
+# LIDARR - Music
+###############################################
+  lidarr:
+    <<: *common-keys
+    container_name: lidarr
+    image: ghcr.io/hotio/lidarr:latest
+    depends_on:
+      - qbittorrent
+      - prowlarr
+    ports:
+      - 8686:8686
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./lidarr:/config
+      - /mnt/pve/nas_files:/data
+    networks:
+      servarrnetwork:
+        ipv4_address: 172.39.0.7
+
+###############################################
+# BAZARR - Subtitles
+###############################################
+  bazarr:
+    <<: *common-keys
+    container_name: bazarr
+    image: ghcr.io/hotio/bazarr:latest
+    ports:
+      - 6767:6767
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./bazarr:/config
+      - /mnt/pve/nas_files/media:/data/media
+    networks:
+      servarrnetwork:
+        ipv4_address: 172.39.0.8
+
+###############################################
+# JELLYFIN - Media Server
+###############################################
+  jellyfin:
+    <<: *common-keys
+    container_name: jellyfin
+    image: ghcr.io/hotio/jellyfin:latest
+    devices:
+      - /dev/dri:/dev/dri
+    group_add:
+      - "107"
+    ports:
+      - 8096:8096
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./jellyfin:/config
+      - /mnt/pve/nas_files/media:/data/media:ro
+    networks:
+      servarrnetwork:
+        ipv4_address: 172.39.0.9
+
+################################################
+# SEERR - Media Recommendation Engine
+################################################
+  seerr:
+    <<: *common-keys
+    container_name: seerr
+    image: ghcr.io/seerr-team/seerr:latest
+    ports:
+      - 5055:5055
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./seerr:/app/config
+    networks:
+      servarrnetwork:
+        ipv4_address: 172.39.0.10
+      cftunnel:
+
+################################################
+# Maintainerr - Media Maintenance and Cleanup
+################################################
+  maintainerr:
+    <<: *common-keys
+    image: ghcr.io/maintainerr/maintainerr:latest
+    container_name: maintainerr
+    ports:
+      - 6246:6246
+    volumes:
+      - ./data:/opt/data
+    networks:
+      servarrnetwork:
+        ipv4_address: 172.39.0.11
+
+################################################
+# Watchtower - Container Update Monitor
+################################################
+  watchtower:
+    image: containrrr/watchtower
+    container_name: watchtower
+    restart: unless-stopped
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - WATCHTOWER_SCHEDULE=0 4 * * *
+      - WATCHTOWER_CLEANUP=true
+      - WATCHTOWER_INCLUDE_STOPPED=false
+      - TZ=America/Los_Angeles
+      - DOCKER_API_VERSION=1.51
+    networks:
+      servarrnetwork:
+        ipv4_address: 172.39.0.12
+
+###############################################
+# Cloudflared
+###############################################
+  cloudflared:
+    <<: *common-keys
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared
+    command: tunnel run
+    networks:
+       - cftunnel
+    environment:
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN}
+
+###############################################
+# ARR Stack Dedicated Network with IPAM
+###############################################
+networks:
+  servarrnetwork:
+    name: servarrnetwork
+    ipam:
+      config:
+        - subnet: 172.39.0.0/24
+  cftunnel:
+    driver: bridge
