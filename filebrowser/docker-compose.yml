@@ -1,0 +1,68 @@
+###############################################
+# Common Keys
+###############################################
+
+x-common-keys: &common-keys
+  restart: unless-stopped
+  logging:
+    driver: json-file
+  environment:
+    PUID: 1000
+    PGID: 1000
+    TZ: America/Los_Angeles
+
+services:
+
+################################################
+# File Browser
+################################################ 
+  filebrowser:
+    <<: *common-keys
+    image: filebrowser/filebrowser:latest
+    container_name: filebrowser
+    user: "1000:1000"
+    networks:
+      - cftunnel
+    volumes:
+      - /mnt/pve/nas_files:/srv
+      - ./database.db:/database.db
+      - ./settings.json:/config/settings.json
+      - ./logs/filebrowser.log:/logs/filebrowser.log
+
+################################################
+# CouchDB
+################################################
+  couchdb:
+    <<: *common-keys
+    image: couchdb:3.3
+    container_name: couchdb
+    networks:
+      - cftunnel
+    # ports:
+    #   - 5984:5984 # Closed to host. Handled internally by Cloudflared.
+    environment:
+      - COUCHDB_USER=${DB_USER}
+      - COUCHDB_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - ./couchdb/data:/opt/couchdb/data
+      - ./couchdb/local.ini:/opt/couchdb/etc/local.d/local.ini
+
+#################################################
+# Cloudflared
+#################################################
+  cloudflared:
+    <<: *common-keys
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared
+    command: tunnel run
+    networks:
+      - cftunnel
+    environment:
+      - TUNNEL_TOKEN=${TUNNEL_TOKEN}
+
+#################################################
+# Networks Config
+#################################################
+networks:
+  cftunnel:
+    driver: bridge
