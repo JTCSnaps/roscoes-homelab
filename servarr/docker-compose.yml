@@ -18,6 +18,7 @@ services:
   gluetun:
     container_name: gluetun
     image: qmcgaw/gluetun:latest
+    restart: unless-stopped
     cap_add:
       - NET_ADMIN
     devices:
@@ -178,10 +179,10 @@ services:
     <<: *common-keys
     container_name: jellyfin
     image: ghcr.io/hotio/jellyfin:latest
-    # devices:
-    #   - /dev/dri:/dev/dri
-    # group_add:
-    #   - "107"
+    devices:
+      - /dev/dri:/dev/dri
+    group_add:
+      - "107"
     ports:
       - 8096:8096
     volumes:
