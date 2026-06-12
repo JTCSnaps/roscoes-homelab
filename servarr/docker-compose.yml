@@ -272,9 +272,12 @@ services:
       - NET_ADMIN # Mandatory: Permits the container to alter routing tables and attach the 'wt0' interface to the host kernel.
     volumes:
       - ./netbird/config:/etc/netbird # Ensures authorization tokens and peer states persist across container restarts.
+    env_file:
+      - .env
     environment:
       - TZ=America/Los_Angeles
       - NB_LOG_LEVEL=info
+      - NB_SETUP_KEY=${NB_SETUP_KEY} # Pre-generated auth key for secure, passwordless peer authentication.
 
 ###############################################
 # ARR Stack Dedicated Network with IPAM
