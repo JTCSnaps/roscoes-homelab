@@ -181,11 +181,15 @@ services:
     image: ghcr.io/hotio/jellyfin:latest
     devices:
       - /dev/dri:/dev/dri
+      - /dev/dri/card0:/dev/dri/card0
+      - /dev/dri/renderD128:/dev/dri/renderD128
+
     group_add:
-      - "107"
+      - "993"
     ports:
       - 8096:8096
     volumes:
+      - ~/docker/jellyfin/transcode:/transcode
       - /etc/localtime:/etc/localtime:ro
       - ./jellyfin:/config
       - /mnt/pve/nas_files/media:/data/media:ro
