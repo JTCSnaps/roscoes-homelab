@@ -23,6 +23,8 @@ services:
     user: "1000:1000"
     networks:
       - cftunnel
+    ports:
+      - 8080:80
     volumes:
       - /mnt/pve/nas_files:/srv
       - ./database.db:/database.db
