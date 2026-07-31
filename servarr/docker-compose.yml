@@ -185,7 +185,8 @@ services:
       - /dev/dri/renderD128:/dev/dri/renderD128
 
     group_add:
-      - "993"
+      - "993" # video group for hardware acceleration
+      #- "44" # render group for hardware acceleration
     ports:
       - 8096:8096
     volumes:
