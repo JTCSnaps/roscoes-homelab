@@ -265,24 +265,24 @@ services:
 ###############################################
 # NETBIRD - P2P Mesh Network Client
 ###############################################
-  netbird:
-    image: netbirdio/netbird:latest
-    container_name: netbird
-    restart: unless-stopped
-    # UNDER THE HOOD MECHANISM: Bypasses Docker's virtual network bridge and user-land proxy entirely.
-    # This mounts the daemon directly onto the host interface (192.168.50.11), allowing raw UDP access 
-    # for STUN hole-punching to guarantee direct, high-speed WireGuard P2P connections instead of slow relays.
-    network_mode: host
-    cap_add:
-      - NET_ADMIN # Mandatory: Permits the container to alter routing tables and attach the 'wt0' interface to the host kernel.
-    volumes:
-      - ./netbird/config:/etc/netbird # Ensures authorization tokens and peer states persist across container restarts.
-    env_file:
-      - .env
-    environment:
-      - TZ=America/Los_Angeles
-      - NB_LOG_LEVEL=info
-      - NB_SETUP_KEY=${NB_SETUP_KEY} # Pre-generated auth key for secure, passwordless peer authentication.
+  # netbird:
+  #   image: netbirdio/netbird:latest
+  #   container_name: netbird
+  #   restart: unless-stopped
+  #   # UNDER THE HOOD MECHANISM: Bypasses Docker's virtual network bridge and user-land proxy entirely.
+  #   # This mounts the daemon directly onto the host interface (192.168.50.11), allowing raw UDP access 
+  #   # for STUN hole-punching to guarantee direct, high-speed WireGuard P2P connections instead of slow relays.
+  #   network_mode: host
+  #   cap_add:
+  #     - NET_ADMIN # Mandatory: Permits the container to alter routing tables and attach the 'wt0' interface to the host kernel.
+  #   volumes:
+  #     - ./netbird/config:/etc/netbird # Ensures authorization tokens and peer states persist across container restarts.
+  #   env_file:
+  #     - .env
+  #   environment:
+  #     - TZ=America/Los_Angeles
+  #     - NB_LOG_LEVEL=info
+  #     - NB_SETUP_KEY=${NB_SETUP_KEY} # Pre-generated auth key for secure, passwordless peer authentication.
 
 ###############################################
 # ARR Stack Dedicated Network with IPAM
