@@ -59,7 +59,7 @@ services:
     volumes:
       - /etc/localtime:/etc/localtime:ro
       - ./qbittorrent:/config
-      - /mnt/pve/nas_files:/data
+      - /mnt/pve/nas_files/torrents:/data/torrents
 
 ###############################################
 # PROWLARR - Indexer Manager
