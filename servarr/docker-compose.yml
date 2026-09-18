@@ -217,27 +217,12 @@ services:
       cftunnel:
 
 ################################################
-# Maintainerr - Media Maintenance and Cleanup
-################################################
-  maintainerr:
-    <<: *common-keys
-    image: ghcr.io/maintainerr/maintainerr:latest
-    container_name: maintainerr
-    ports:
-      - 6246:6246
-    volumes:
-      - ./data:/opt/data
-    networks:
-      servarrnetwork:
-        ipv4_address: 172.39.0.11
-
-################################################
 # Watchtower - Container Update Monitor
 ################################################
   watchtower:
     image: containrrr/watchtower
     container_name: watchtower
-    restart: unless-stopped
+    # restart: unless-stopped
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
