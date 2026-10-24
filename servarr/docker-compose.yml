@@ -29,8 +29,8 @@ services:
       - 6881:6881/udp # qBittorrent UDP
     volumes:
       - ./gluetun:/gluetun
-    environment:
-      - WIREGUARD_MTU=1420 # Increased from 1280 to reduce fragment timeouts
+    # environment:
+    #   - WIREGUARD_MTU=1280 # decreased from 1420
     env_file:
       - .env
     healthcheck:
@@ -216,24 +216,24 @@ services:
         ipv4_address: 172.39.0.10
       cftunnel:
 
-################################################
-# Watchtower - Container Update Monitor
-################################################
-  watchtower:
-    image: containrrr/watchtower
-    container_name: watchtower
-    # restart: unless-stopped
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    environment:
-      - WATCHTOWER_SCHEDULE=0 4 * * *
-      - WATCHTOWER_CLEANUP=true
-      - WATCHTOWER_INCLUDE_STOPPED=false
-      - TZ=America/Los_Angeles
-      - DOCKER_API_VERSION=1.51
-    networks:
-      servarrnetwork:
-        ipv4_address: 172.39.0.12
+# ################################################
+# # Watchtower - Container Update Monitor
+# ################################################
+#   watchtower:
+#     image: containrrr/watchtower
+#     container_name: watchtower
+#     # restart: unless-stopped
+#     volumes:
+#       - /var/run/docker.sock:/var/run/docker.sock
+#     environment:
+#       - WATCHTOWER_SCHEDULE=0 4 * * *
+#       - WATCHTOWER_CLEANUP=true
+#       - WATCHTOWER_INCLUDE_STOPPED=false
+#       - TZ=America/Los_Angeles
+#       - DOCKER_API_VERSION=1.51
+#     networks:
+#       servarrnetwork:
+#         ipv4_address: 172.39.0.12
 
 ###############################################
 # Cloudflared
