@@ -23,8 +23,7 @@ services:
     user: "1000:1000"
     networks:
       - cftunnel
-    ports:
-      - 8080:80
+    # Host port closed; the Cloudflare tunnel uses the Docker network.
     volumes:
       - /mnt/pve/nas_files:/srv
       - ./database.db:/database.db
@@ -40,8 +39,7 @@ services:
     container_name: couchdb
     networks:
       - cftunnel
-    # ports:
-    #   - 5984:5984 # Closed to host. Handled internally by Cloudflared.
+    # Host port closed; the Cloudflare tunnel uses the Docker network.
     environment:
       - COUCHDB_USER=${DB_USER}
       - COUCHDB_PASSWORD=${DB_PASSWORD}
